@@ -71,8 +71,8 @@ class BiLstmContext(chainer.Chain):
     Bidirectional LSTM context.
     """
       
-    def __init__(self, deep, gpu, word2index, in_units, hidden_units, out_units, loss_func, train, drop_ratio=0.0):
-        n_vocab = len(word2index)        
+    def __init__(self, deep, gpu, word2index1, word2index2, in_units, hidden_units, out_units, loss_func, train, drop_ratio=0.0):
+        n_vocab1, n_vocab2 = len(word2index1), len(word2index2)
         l2r_embedding=F.EmbedID(n_vocab, in_units)
         r2l_embedding=F.EmbedID(n_vocab, in_units)
         
@@ -206,7 +206,7 @@ class BiLstmContext(chainer.Chain):
 
                
     def _calculate_loss(self, sent):
-        # sent is a batch of sentences.
+        # sent is a batch of pairs of sentences.
         sent_arr = self.xp.asarray(sent, dtype=np.int32)
 
         sent_y = self._contexts_rep(sent_arr)

@@ -140,7 +140,7 @@ for epoch in range(args.epoch):
         del loss
         optimizer.update()
 
-        word_count += len(sent)*len(sent[0]) # all sents in a batch are the same length
+        word_count += len(sent)*len(sent[0][0]) # all sents in a batch are the same length
         accum_mean_loss = float(accum_loss)/word_count if accum_loss > 0.0 else 0.0
 
         if word_count >= next_count:        

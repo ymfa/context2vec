@@ -2,24 +2,33 @@ import math
 import collections
 import numpy as np
 
-from context2vec.common.defs import Toks, SENT_COUNTS_FILENAME, WORD_COUNTS_FILENAME
+from context2vec.common.defs import Toks, SENT_COUNTS_FILENAME, WORD_COUNTS_FILENAME, LANG1, LANG2
 
 
-def read_batch(f, batchsize, word2index):        
+def read_batch(f1, f2, batchsize, word2index1, word2index2):        
     batch = []
     while len(batch) < batchsize:
-        line = f.readline()
-        if not line: break
-        sent_words = line.strip().lower().split()
-        assert(len(sent_words) > 1)
-        sent_inds = []
-        for word in sent_words:
-            if word in word2index:
-                ind = word2index[word]
+        line1 = f1.readline()
+        line2 = f2.readline()
+        if not line1: break
+        sent_words1 = line1.strip().split()
+        sent_words2 = line2.strip().split()
+        assert(len(sent_words1) > 1 and len(sent_words2) == len(sent_words1))
+        sent_inds1 = []
+        for word in sent_words1:
+            if word in word2index1:
+                ind = word2index1[word]
             else:
-                ind = word2index['<UNK>']
-            sent_inds.append(ind)
-        batch.append(sent_inds)
+                ind = word2index1['<UNK>']
+            sent_inds1.append(ind)
+        sent_inds2 = []
+        for word in sent_words2:
+            if word in word2index2:
+                ind = word2index2[word]
+            else:
+                ind = word2index2['<UNK>']
+            sent_inds2.append(ind)
+        batch.append((sent_inds1, sent_inds2))
     return batch
 
 
@@ -39,19 +48,22 @@ class SentenceReaderDir(object):
         :param trimfreq: treat all words with lower frequency than trimfreq as unknown words
         :param batchsize: the size of the minibatch that will be read in every iteration
         '''
-        self.path = path
+        self.path_prefix = path
+        self.path1 = "%s.%s.DIR" % (path, LANG1)
+        self.path2 = "%s.%s.DIR" % (path, LANG2)
         self.batchsize = batchsize
-        self.trimmed_word2count, self.word2index, self.index2word = self.read_and_trim_vocab(trimfreq)
-        self.total_words = sum(self.trimmed_word2count.itervalues())
+        self.trimmed_word2count1, self.word2index1, self.index2word1 = self.read_and_trim_vocab(self.path1, trimfreq)
+        self.trimmed_word2count2, self.word2index2, self.index2word2 = self.read_and_trim_vocab(self.path2, trimfreq)
+        self.total_words = sum(self.trimmed_word2count1.itervalues()) + sum(self.trimmed_word2count2.itervalues())
         self.fds = []
         
     def open(self):
         self.fds = []
-        with open(self.path+'/'+self.sent_counts_filename) as f:
+        with open(self.path1+'/'+self.sent_counts_filename) as f:
             for line in f:
                 [filename, count] = line.strip().split()
                 batches = int(math.ceil(float(count) / self.batchsize))
-                fd = open(self.path+'/'+filename, 'r')
+                fd = open(self.path1+'/'+filename, 'r'), open(self.path2+'/'+filename, 'r')
                 self.fds = self.fds + [fd]*batches
         np.random.seed(1034)
         np.random.shuffle(self.fds)
@@ -59,13 +71,14 @@ class SentenceReaderDir(object):
 
     def close(self):
         fds_set = set(self.fds)
-        for f in fds_set:
-            f.close()
+        for f1, f2 in fds_set:
+            f1.close()
+            f2.close()
                         
             
-    def read_and_trim_vocab(self, trimfreq):
+    def read_and_trim_vocab(self, path, trimfreq):
         word2count = collections.Counter()
-        with open(self.path+'/'+self.word_counts_filename) as f:
+        with open(path+'/'+self.word_counts_filename) as f:
             for line in f:
                 [word, count] = line.strip().lower().split()
                 word2count[word] = int(count)
@@ -90,8 +103,8 @@ class SentenceReaderDir(object):
 
        
     def next_batch(self):                
-        for fd in self.fds:
-            batch = read_batch(fd, self.batchsize, self.word2index)
+        for fd1, fd2 in self.fds:
+            batch = read_batch(fd1, fd2, self.batchsize, self.word2index1, self.word2index2)
             yield batch
  
  

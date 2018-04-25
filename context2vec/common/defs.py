@@ -9,3 +9,5 @@ IN_TO_OUT_UNITS_RATIO = 2
 SENT_COUNTS_FILENAME = 's_counts'    
 WORD_COUNTS_FILENAME = 'w_counts'
 TOTAL_COUNTS_FILENAME = 'totals'
+LANG1 = 'en'
+LANG2 = 'de'
