@@ -18,7 +18,7 @@ class ModelReader(object):
         print 'Reading config file: ' + config_file
         params = self.read_config_file(config_file)
         print 'Config: ', params
-        self.w, self.word2index, self.index2word, self.model = self.read_model(params)
+        self.w, self.word2index1, self.index2word1, self.word2index2, self.index2word2, self.model = self.read_model(params)
         
 
 
@@ -56,12 +56,14 @@ class ModelReader(object):
         
         words_file = params['config_path'] + params['words_file']
         model_file = params['config_path'] + params['model_file']
+        vocab_file = params['config_path'] + params['vocab_file']
         unit = int(params['unit'])
         deep = (params['deep'] == 'yes')
         drop_ratio = float(params['drop_ratio'])
         
         #read and normalize target word embeddings
-        w, word2index, index2word = self.read_words(words_file) 
+        word2index1, index2word1 = self.read_vocab(vocab_file)
+        w, word2index2, index2word2 = self.read_words(words_file)
         s = numpy.sqrt((w * w).sum(1))
         s[s==0.] = 1.
         w /= s.reshape((s.shape[0], 1))  # normalize
@@ -70,13 +72,13 @@ class ModelReader(object):
         lstm_hidden_units = IN_TO_OUT_UNITS_RATIO*unit
         target_word_units = IN_TO_OUT_UNITS_RATIO*unit
         
-        cs = [1 for _ in range(len(word2index))] # dummy word counts - not used for eval
+        cs = [1 for _ in range(len(word2index2))] # dummy word counts - not used for eval
         loss_func = L.NegativeSampling(target_word_units, cs, NEGATIVE_SAMPLING_NUM) # dummy loss func - not used for eval
         
-        model = BiLstmContext(deep, self.gpu, word2index, context_word_units, lstm_hidden_units, target_word_units, loss_func, train, drop_ratio)
+        model = BiLstmContext(deep, self.gpu, word2index1, word2index2, context_word_units, lstm_hidden_units, target_word_units, None, loss_func, train, drop_ratio)
         S.load_npz(model_file, model)
         
-        return w, word2index, index2word, model
+        return w, word2index1, index2word1, word2index2, index2word2, model
     
     def read_bow_model(self, params):
         words_file = params['config_path'] + params['words_file']
@@ -115,6 +117,15 @@ class ModelReader(object):
         
         return w, word2index, index2word, model
 
+    def read_vocab(self, filename):
+        word2index = {}
+        index2word = []
+        with open(filename, 'r') as f:
+            for i, line in enumerate(f):
+                word = line.strip()
+                index2word.append(word)
+                word2index[word] = i
+        return word2index, index2word
 
     def read_words(self, filename):
         with open(filename, 'r') as f:

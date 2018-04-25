@@ -17,8 +17,11 @@ from sentence_reader import SentenceReaderDir
 from context2vec.common.context_models import BiLstmContext
 from context2vec.common.defs import IN_TO_OUT_UNITS_RATIO, NEGATIVE_SAMPLING_NUM
 
+def dump_vocab(filename, index2word):
+    with open(filename, 'w') as f:
+        for i in xrange(len(index2word)):
+            f.write("%s\n" % index2word[i])
 
-#TODO: LOWER AS ARG
 def dump_embeddings(filename, w, units, index2word):
     with open(filename, 'w') as f:
         f.write('%d %d\n' % (len(index2word), units))
@@ -163,6 +166,7 @@ for epoch in range(args.epoch):
     
 if args.wordsfile != None:        
     dump_embeddings(args.wordsfile+'.targets', model.loss_func.W.data, target_word_units, reader.index2word2)
+    dump_vocab(args.wordsfile+'.source', reader.index2word1)
 
 if args.modelfile != None:
     S.save_npz(args.modelfile, model)
@@ -170,6 +174,7 @@ if args.modelfile != None:
 with open(args.modelfile + '.params', 'w') as f:
     f.write('model_file\t' + args.modelfile[args.modelfile.rfind('/')+1:]+'\n')
     f.write('words_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.targets\n')
+    f.write('vocab_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.source\n')
     f.write('unit\t' + str(args.unit)+'\n')
     if args.deep:
         f.write('deep\tyes\n')
