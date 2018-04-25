@@ -71,16 +71,16 @@ class BiLstmContext(chainer.Chain):
     Bidirectional LSTM context.
     """
       
-    def __init__(self, deep, gpu, word2index1, word2index2, in_units, hidden_units, out_units, loss_func, train, drop_ratio=0.0):
+    def __init__(self, deep, gpu, word2index1, word2index2, in_units, hidden_units, out_units, loss_func1, loss_func2, train, drop_ratio=0.0):
         n_vocab1, n_vocab2 = len(word2index1), len(word2index2)
-        l2r_embedding=F.EmbedID(n_vocab, in_units)
-        r2l_embedding=F.EmbedID(n_vocab, in_units)
+        l2r_embedding=F.EmbedID(n_vocab1, in_units)
+        r2l_embedding=F.EmbedID(n_vocab1, in_units)
         
         if deep:
             super(BiLstmContext, self).__init__(
                 l2r_embed=l2r_embedding,
                 r2l_embed=r2l_embedding,
-                loss_func=loss_func,
+                loss_func=loss_func2,
                 l2r_1 = L.LSTM(in_units, hidden_units),
                 r2l_1 = L.LSTM(in_units, hidden_units),
                 l3 = L.Linear(2*hidden_units, 2*hidden_units),
@@ -90,7 +90,7 @@ class BiLstmContext(chainer.Chain):
             super(BiLstmContext, self).__init__(
                 l2r_embed=l2r_embedding,
                 r2l_embed=r2l_embedding,
-                loss_func=loss_func,
+                loss_func=loss_func2,
                 l2r_1 = L.LSTM(in_units, hidden_units),
                 r2l_1 = L.LSTM(in_units, hidden_units),
                 lp_l2r = L.Linear(hidden_units, out_units/2),
@@ -102,7 +102,8 @@ class BiLstmContext(chainer.Chain):
         l2r_embedding.W.data = self.xp.random.normal(0, math.sqrt(1. / l2r_embedding.W.data.shape[0]), l2r_embedding.W.data.shape).astype(np.float32)       
         r2l_embedding.W.data = self.xp.random.normal(0, math.sqrt(1. / r2l_embedding.W.data.shape[0]), r2l_embedding.W.data.shape).astype(np.float32)
         
-        self.word2index = word2index
+        self.word2index1 = word2index1
+        self.word2index2 = word2index2
         self.train = train
         self.deep = deep
         self.drop_ratio = drop_ratio
@@ -114,7 +115,7 @@ class BiLstmContext(chainer.Chain):
         :param position: the position of the target slot in sent_words (value of sent_words[i] will be ignored)
         :return vector representation of context
         '''
-        sent = [self.word2index[word] if word in self.word2index else Toks.UNK for word in sent_words]
+        sent = [self.word2index1[word] if word in self.word2index1 else Toks.UNK for word in sent_words]
         return self.context_rep(sent, position)
        
     def __call__(self, sent):
@@ -209,11 +210,11 @@ class BiLstmContext(chainer.Chain):
         # sent is a batch of pairs of sentences.
         sent_arr = self.xp.asarray(sent, dtype=np.int32)
 
-        sent_y = self._contexts_rep(sent_arr)
+        sent_y = self._contexts_rep(sent_arr[:,0,:])
         
         sent_x = []
         for i in range(sent_arr.shape[1]):
-            x = chainer.Variable(sent_arr[:,i])
+            x = chainer.Variable(sent_arr[:,1,i])
             sent_x.append(x)
             
         accum_loss = None

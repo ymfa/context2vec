@@ -104,14 +104,17 @@ if args.gpu >= 0:
 xp = cuda.cupy if args.gpu >= 0 else np
     
 reader = SentenceReaderDir(args.indir, args.trimfreq, args.batchsize)
-print('n_vocab: %d' % (len(reader.word2index)-3)) # excluding the three special tokens
+print('n_vocab1: %d' % (len(reader.word2index1)-3)) # excluding the three special tokens
+print('n_vocab2: %d' % (len(reader.word2index2)-3)) # excluding the three special tokens
 print('corpus size: %d' % (reader.total_words))
 
-cs = [reader.trimmed_word2count[w] for w in range(len(reader.trimmed_word2count))]
-loss_func = L.NegativeSampling(target_word_units, cs, NEGATIVE_SAMPLING_NUM, args.ns_power)
+cs1 = [reader.trimmed_word2count1[w] for w in range(len(reader.trimmed_word2count1))]
+cs2 = [reader.trimmed_word2count1[w] for w in range(len(reader.trimmed_word2count2))]
+loss_func1 = L.NegativeSampling(target_word_units, cs1, NEGATIVE_SAMPLING_NUM, args.ns_power)
+loss_func2 = L.NegativeSampling(target_word_units, cs2, NEGATIVE_SAMPLING_NUM, args.ns_power)
 
 if args.context == 'lstm':
-    model = BiLstmContext(args.deep, args.gpu, reader.word2index, context_word_units, lstm_hidden_units, target_word_units, loss_func, True, args.dropout)
+    model = BiLstmContext(args.deep, args.gpu, reader.word2index1, reader.word2index2, context_word_units, lstm_hidden_units, target_word_units, loss_func1, loss_func2, True, args.dropout)
 else:
     raise Exception('Unknown context type: {}'.format(args.context))
 
@@ -132,7 +135,7 @@ for epoch in range(args.epoch):
 
     reader.open()    
     for sent in reader.next_batch():
-
+        print '.',
         model.zerograds()
         loss = model(sent)
         accum_loss += loss.data
@@ -159,7 +162,7 @@ for epoch in range(args.epoch):
     reader.close()
     
 if args.wordsfile != None:        
-    dump_embeddings(args.wordsfile+'.targets', model.loss_func.W.data, target_word_units, reader.index2word)
+    dump_embeddings(args.wordsfile+'.targets', model.loss_func.W.data, target_word_units, reader.index2word2)
 
 if args.modelfile != None:
     S.save_npz(args.modelfile, model)
