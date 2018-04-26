@@ -163,25 +163,25 @@ for epoch in range(args.epoch):
 
     print 'accum words per epoch', word_count, 'accum_loss', accum_loss, 'accum_loss/word', accum_mean_loss
     reader.close()
-    
-if args.wordsfile != None:        
-    dump_embeddings(args.wordsfile+'.targets', model.loss_func.W.data, target_word_units, reader.index2word2)
-    dump_vocab(args.wordsfile+'.source', reader.index2word1)
+    if int(epoch)%2==0:
+        if args.wordsfile != None:        
+            dump_embeddings(args.wordsfile+'.targets.{0}'.format(epoch), model.loss_func.W.data, target_word_units, reader.index2word2)
+            dump_vocab(args.wordsfile+'.source.{0}'.format(epoch), reader.index2word1)
 
-if args.modelfile != None:
-    S.save_npz(args.modelfile, model)
-    
-with open(args.modelfile + '.params', 'w') as f:
-    f.write('model_file\t' + args.modelfile[args.modelfile.rfind('/')+1:]+'\n')
-    f.write('words_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.targets\n')
-    f.write('vocab_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.source\n')
-    f.write('unit\t' + str(args.unit)+'\n')
-    if args.deep:
-        f.write('deep\tyes\n')
-    else:
-        f.write('deep\tno\n')
-    f.write('drop_ratio\t' + str(args.dropout)+'\n')    
-    f.write('#\t{}\n'.format(' '.join(sys.argv)))
-    
+        if args.modelfile != None:
+            S.save_npz(args.modelfile+'.{0}'.format(epoch), model)
+
+        with open(args.modelfile + '.params.{0}'.format(epoch), 'w') as f:
+            f.write('model_file\t' + args.modelfile[args.modelfile.rfind('/')+1:]+'\n')
+            f.write('words_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.targets\n')
+            f.write('vocab_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.source\n')
+            f.write('unit\t' + str(args.unit)+'\n') 
+            if args.deep:
+                f.write('deep\tyes\n')
+            else:
+                f.write('deep\tno\n')
+            f.write('drop_ratio\t' + str(args.dropout)+'\n')    
+            f.write('#\t{}\n'.format(' '.join(sys.argv)))
+
     
 
