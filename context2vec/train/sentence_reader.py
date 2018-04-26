@@ -80,7 +80,7 @@ class SentenceReaderDir(object):
         word2count = collections.Counter()
         with open(path+'/'+self.word_counts_filename) as f:
             for line in f:
-                [word, count] = line.strip().lower().split()
+                [word, count] = line.strip().split()
                 word2count[word] = int(count)
     
         trimmed_word2count = collections.Counter()
@@ -88,7 +88,7 @@ class SentenceReaderDir(object):
         word2index = {'<UNK>':Toks.UNK, '<BOS>':Toks.BOS, '<EOS>':Toks.EOS}
         unknown_counts = 0
         for word, count in word2count.iteritems():
-            if count >= trimfreq and word.lower() != '<unk>' and word.lower() != '<rw>':    
+            if count >= trimfreq and word not in word2index:
                 ind = len(word2index)
                 word2index[word] = ind
                 index2word[ind] = word

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     word_counts = Counter()
     
     for line in corpus_file:
-        words = line.strip().lower().split()
+        words = line.strip().split()
         wordnum = len(words)
         if wordnum > 1 and wordnum <= max_sent_len:
             num_filename = 'sent.' + str(wordnum)
