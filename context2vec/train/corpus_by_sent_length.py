@@ -39,6 +39,7 @@ if __name__ == '__main__':
     word_counts = Counter()
     
     for line in corpus_file:
+        line=line.replace('<unk>','<UNK>')
         words = line.strip().split()
         wordnum = len(words)
         if wordnum > 1 and wordnum <= max_sent_len:
