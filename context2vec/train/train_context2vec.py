@@ -123,7 +123,7 @@ else:
     raise Exception('Unknown context type: {}'.format(args.context))
 
 
-optimizer = O.Adam(alpha=args.learning_rate)
+optimizer = O.Adam(alpha=float(args.learning_rate), amsgrad=True)
 optimizer.setup(model)
 
 STATUS_INTERVAL = 1000000
