@@ -139,71 +139,72 @@ class BiLstmContext(chainer.Chain):
         return sent_y[position].data[0]           
         
     def _contexts_rep(self, sent_arr):
-        
-        batchsize = len(sent_arr)
-        
-        bos = self.xp.full((batchsize,1), Toks.BOS, dtype=np.int32)
-        eos = self.xp.full((batchsize,1), Toks.EOS, dtype=np.int32)
-                
-        l2r_sent = self.xp.hstack((bos,sent_arr))            # <bos> a b c
-        r2l_sent = self.xp.hstack((eos,sent_arr[:,::-1]))    # <eos> c b a 
+        with chainer.using_config('train', self.train):
 
-        # generate left-to-right contexts representations
-        l2r_sent_h = []
-        for i in range(l2r_sent.shape[1]-1): # we don't need the last word in the sentence
-            c = chainer.Variable(l2r_sent[:,i])
-            e = self.l2r_embed(c)            
-            if self.drop_ratio > 0.0:
-                h = self.l2r_1(F.dropout(e, ratio=self.drop_ratio, train=self.train))
-            else:
-                h = self.l2r_1(e)
-            l2r_sent_h.append(h)
-            
-        # generate right-to-left contexts representations
-        r2l_sent_h = []
-        for i in range(r2l_sent.shape[1]-1): # we don't want the last word in the sentence
-            c = chainer.Variable(r2l_sent[:,i])
-            e = self.r2l_embed(c)
-            if self.drop_ratio > 0.0:
-                h = self.r2l_1(F.dropout(e, ratio=self.drop_ratio, train=self.train))
-            else:
-                h = self.r2l_1(e)
-            r2l_sent_h.append(h)
-            
-        r2l_sent_h.reverse()
-        
-        # l2r_sent_h: h(<bos>)  h(a)  h(b)
-        # r2l_sent_h:   h(b)    h(c) h(<eos>)
-        
-        # concat left-to-right with right-to-left
-        sent_bi_h = []
-        for l2r_h, r2l_h in izip(l2r_sent_h, r2l_sent_h):
-            if not self.deep: # projecting hidden state to half out-units dimensionality before concatenating
+            batchsize = len(sent_arr)
+
+            bos = self.xp.full((batchsize,1), Toks.BOS, dtype=np.int32)
+            eos = self.xp.full((batchsize,1), Toks.EOS, dtype=np.int32)
+
+            l2r_sent = self.xp.hstack((bos,sent_arr))            # <bos> a b c
+            r2l_sent = self.xp.hstack((eos,sent_arr[:,::-1]))    # <eos> c b a 
+
+            # generate left-to-right contexts representations
+            l2r_sent_h = []
+            for i in range(l2r_sent.shape[1]-1): # we don't need the last word in the sentence
+                c = chainer.Variable(l2r_sent[:,i])
+                e = self.l2r_embed(c)            
                 if self.drop_ratio > 0.0:
-                    l2r_h = self.lp_l2r(F.dropout(l2r_h, ratio=self.drop_ratio, train=self.train))
-                    r2l_h = self.lp_r2l(F.dropout(r2l_h, ratio=self.drop_ratio, train=self.train))
+                        h = self.l2r_1(F.dropout(e, ratio=self.drop_ratio))
                 else:
-                    l2r_h = self.lp_l2r(l2r_h)
-                    r2l_h = self.lp_r2l(r2l_h)
-            bi_h = F.concat((l2r_h, r2l_h)) # TODO - is concat slow??
-            sent_bi_h.append(bi_h)
+                    h = self.l2r_1(e)
+                l2r_sent_h.append(h)
 
-        
-        # Use a 2-layer perceptron to merge the hidden states of both sides of the context
-        if self.deep:    
-            sent_y = []
-            for bi_h in sent_bi_h:
+            # generate right-to-left contexts representations
+            r2l_sent_h = []
+            for i in range(r2l_sent.shape[1]-1): # we don't want the last word in the sentence
+                c = chainer.Variable(r2l_sent[:,i])
+                e = self.r2l_embed(c)
                 if self.drop_ratio > 0.0:
-                    h1 = F.relu(self.l3(F.dropout(bi_h, ratio=self.drop_ratio, train=self.train)))
-                    y = self.l4(F.dropout(h1, ratio=self.drop_ratio, train=self.train))
+                    h = self.r2l_1(F.dropout(e, ratio=self.drop_ratio))
                 else:
-                    h1 = F.relu(self.l3(bi_h))
-                    y = self.l4(h1)
+                    h = self.r2l_1(e)
+                r2l_sent_h.append(h)
 
-                sent_y.append(y)
-            return sent_y
-        else:
-            return sent_bi_h
+            r2l_sent_h.reverse()
+
+            # l2r_sent_h: h(<bos>)  h(a)  h(b)
+            # r2l_sent_h:   h(b)    h(c) h(<eos>)
+
+            # concat left-to-right with right-to-left
+            sent_bi_h = []
+            for l2r_h, r2l_h in izip(l2r_sent_h, r2l_sent_h):
+                if not self.deep: # projecting hidden state to half out-units dimensionality before concatenating
+                    if self.drop_ratio > 0.0:
+                        l2r_h = self.lp_l2r(F.dropout(l2r_h, ratio=self.drop_ratio))
+                        r2l_h = self.lp_r2l(F.dropout(r2l_h, ratio=self.drop_ratio))
+                    else:
+                        l2r_h = self.lp_l2r(l2r_h)
+                        r2l_h = self.lp_r2l(r2l_h)
+                bi_h = F.concat((l2r_h, r2l_h)) # TODO - is concat slow??
+                sent_bi_h.append(bi_h)
+
+
+            # Use a 2-layer perceptron to merge the hidden states of both sides of the context
+            if self.deep:    
+                sent_y = []
+                for bi_h in sent_bi_h:
+                    if self.drop_ratio > 0.0:
+                        h1 = F.relu(self.l3(F.dropout(bi_h, ratio=self.drop_ratio)))
+                        y = self.l4(F.dropout(h1, ratio=self.drop_ratio))
+                    else:
+                        h1 = F.relu(self.l3(bi_h))
+                        y = self.l4(h1)
+
+                    sent_y.append(y)
+                return sent_y
+            else:
+                return sent_bi_h
 
                
     def _calculate_loss(self, sent):

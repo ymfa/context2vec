@@ -38,6 +38,7 @@ def dump_comp_graph(filename, vs):
 def parse_arguments():
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--learning_rate','-l',default=0.001,help='initial learning rate')
     parser.add_argument('--indir', '-i',
                         default=None,
                         help='input corpus directory')
@@ -121,7 +122,8 @@ if args.context == 'lstm':
 else:
     raise Exception('Unknown context type: {}'.format(args.context))
 
-optimizer = O.Adam()
+
+optimizer = O.Adam(alpha=args.learning_rate)
 optimizer.setup(model)
 
 STATUS_INTERVAL = 1000000
