@@ -18,7 +18,7 @@ sudo chmod -R 777 ./*
 cd /home/simp2trad/
 sudo python -m pip install --upgrade pip
 sudo python -m pip install jupyter
-
+sudo python -m pip install pandas
 
 if [ ! -d '/root/.jupyter/' ]; then
     sudo mkdir /root/.jupyter/
