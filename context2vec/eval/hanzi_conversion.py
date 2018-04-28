@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # run conversion test
     def predict(simp_sentence, pos):
         tokens = [t.encode('utf-8') for t in simp_sentence]
-        tokens = [t if t in mr.word2index1 else '<unk>' for t in tokens]
+        tokens = [t if t in mr.word2index1 else '<UNK>' for t in tokens]
         context_embed = mr.model.context2vec(tokens, pos)
         context_embed = context_embed / np.sqrt((context_embed * context_embed).sum())
         simp = simp_sentence[pos]
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         pred_char_raw = predict(row['orig'], pos)
         pred_char = normalize(pred_char_raw)
         trad_count[gold_char] += 1
-        print "%s%s" % (gold_char, pred_char),
+        print "%s%s" % (gold_char.encode('utf-8'), pred_char.encode('utf-8')),
         if gold_char != pred_char:
             orig_char = row['orig_char']
             error_list.loc[len(error_list)] = [pred_char, orig_char, gold_char, pos,
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     for trad, simp in trad2simp.items():
         error, count = trad_error_count[trad], trad_count[trad]
         if count == 0: continue
-        report.loc[len(report)] = [trad, simp, error, count, "%.3f" % (error / count)]
+        report.loc[len(report)] = [trad, simp, error, count, "%.3f" % (float(error) / count)]
         total_error += error
         total_count += count
     report.sort_values(['char_orig', 'error_rate', 'char_gold'], inplace=True)
