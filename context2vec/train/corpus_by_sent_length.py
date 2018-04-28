@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 Converts a single large corpus file into a directory, in which for every sentence length k there is a separate file containing all sentences of that length. 
 '''
@@ -6,15 +8,45 @@ import sys
 import os
 from collections import Counter
 from context2vec.common.defs import SENT_COUNTS_FILENAME, WORD_COUNTS_FILENAME, TOTAL_COUNTS_FILENAME
-
+import re
+import random
+random.seed(1)
 
 def get_file(sub_files, corpus_dir, num_filename):
     if num_filename not in sub_files:
         full_file_name = corpus_dir + '/' + num_filename
         sub_files[num_filename] = open(full_file_name, 'w')        
     return sub_files[num_filename]
-   
 
+def sent_seg_small(sent):
+    sent_list=re.findall(ur'[^、，,；;！。？!?\n]+(?:[、,;，；！。？!?\n])*', sent)
+    return sent_list
+
+def sent_permutate(sent):
+    new_sents=[sent]
+    itera=len(sent)/10
+    if itera <2:
+        return new_sents
+    else:
+        
+        for i in range(itera):
+
+            pos=random.randint(0,len(sent))
+            win=random.randint(10,18)
+            after=len(sent)-1-pos
+            if after>=pos:
+                end=pos+win+1
+                if end>len(sent):
+                    end=len(sent)
+                
+                new_sents.append(sent[pos:end])
+            else:
+                start=pos-win
+                if start<0:
+                    start=0
+                new_sents.append(sent[start:pos])
+    return new_sents
+        
 if __name__ == '__main__':
     
     if len(sys.argv) < 2:
@@ -40,15 +72,22 @@ if __name__ == '__main__':
     
     for line in corpus_file:
         line=line.replace('<unk>','<UNK>')
-        words = line.strip().split()
-        wordnum = len(words)
-        if wordnum > 1 and wordnum <= max_sent_len:
-            num_filename = 'sent.' + str(wordnum)
-            sub_file = get_file(sub_files, corpus_dir, num_filename)
-            sub_file.write(line)
-            sent_counts[num_filename] += 1
-            for word in words:
-                word_counts[word] += 1
+        sent_list=sent_seg_small(line.decode('utf-8'))
+        for sents in sent_list:
+            sents=sents.strip()
+            sents=sent_permutate(sents)
+            for sent in sents:
+                sent=sent.strip().encode('utf-8')
+                words = sent.split()
+                wordnum = len(words)
+                if wordnum > 1 and wordnum <= max_sent_len:
+                    num_filename = 'sent.' + str(wordnum)
+                    sub_file = get_file(sub_files, corpus_dir, num_filename)
+                    #sent=sent.decode('utf8')
+                    sub_file.write(sent+'\n')
+                    sent_counts[num_filename] += 1
+                    for word in words:
+                        word_counts[word] += 1
                
     for sub_file in sub_files.itervalues():
         sub_file.close()
