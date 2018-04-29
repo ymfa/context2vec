@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import math
 from itertools import izip
 
@@ -214,7 +215,7 @@ class BiLstmContext(chainer.Chain):
         sent_y = self._contexts_rep(sent_arr[:,0,:])
         
         sent_x = []
-        for i in range(sent_arr.shape[1]):
+        for i in range(sent_arr.shape[2]):
             x = chainer.Variable(sent_arr[:,1,i])
             sent_x.append(x)
             
@@ -224,4 +225,5 @@ class BiLstmContext(chainer.Chain):
             accum_loss = accum_loss + loss if accum_loss is not None else loss 
         
         return accum_loss
+
 
