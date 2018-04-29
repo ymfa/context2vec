@@ -111,13 +111,11 @@ print('n_vocab1: %d' % (len(reader.word2index1)-3)) # excluding the three specia
 print('n_vocab2: %d' % (len(reader.word2index2)-3)) # excluding the three special tokens
 print('corpus size: %d' % (reader.total_words))
 
-cs1 = [reader.trimmed_word2count1[w] for w in range(len(reader.trimmed_word2count1))]
-cs2 = [reader.trimmed_word2count1[w] for w in range(len(reader.trimmed_word2count2))]
-loss_func1 = L.NegativeSampling(target_word_units, cs1, NEGATIVE_SAMPLING_NUM, args.ns_power)
+cs2 = [reader.trimmed_word2count2[w] for w in range(len(reader.trimmed_word2count2))]
 loss_func2 = L.NegativeSampling(target_word_units, cs2, NEGATIVE_SAMPLING_NUM, args.ns_power)
 
 if args.context == 'lstm':
-    model = BiLstmContext(args.deep, args.gpu, reader.word2index1, reader.word2index2, context_word_units, lstm_hidden_units, target_word_units, loss_func1, loss_func2, True, args.dropout)
+    model = BiLstmContext(args.deep, args.gpu, reader.word2index1, reader.word2index2, context_word_units, lstm_hidden_units, target_word_units, None, loss_func2, True, args.dropout)
 else:
     raise Exception('Unknown context type: {}'.format(args.context))
 
