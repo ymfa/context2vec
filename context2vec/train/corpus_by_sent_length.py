@@ -24,7 +24,8 @@ def sent_seg_small(sent):
 
 def sent_permutate(sent):
     new_sents=[sent]
-    itera=len(sent)/10
+    sent=sent.split()
+    itera=len(sent)/5
     if itera <2:
         return new_sents
     else:
@@ -32,19 +33,19 @@ def sent_permutate(sent):
         for i in range(itera):
 
             pos=random.randint(0,len(sent))
-            win=random.randint(10,18)
+            win=random.randint(5,9)
             after=len(sent)-1-pos
             if after>=pos:
                 end=pos+win+1
                 if end>len(sent):
                     end=len(sent)
                 
-                new_sents.append(sent[pos:end])
+                new_sents.append(' '.join(sent[pos:end]))
             else:
                 start=pos-win
                 if start<0:
                     start=0
-                new_sents.append(sent[start:pos])
+                new_sents.append(' '.join(sent[start:pos]))
     return new_sents
         
 if __name__ == '__main__':
@@ -70,7 +71,13 @@ if __name__ == '__main__':
     sent_counts = Counter()
     word_counts = Counter()
     
+    line_num=0
     for line in corpus_file:
+        line_num+=1
+        if line_num%10000==0 and line_num>=10000:
+            print '.',
+       
+           
         line=line.replace('<unk>','<UNK>')
         sent_list=sent_seg_small(line.decode('utf-8'))
         for sents in sent_list:
