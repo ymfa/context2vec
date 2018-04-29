@@ -5,7 +5,8 @@ FROM chainer/chainer:v4.0.0-python2
 
 #USER ql261
 
-
+RUN apt-get update -y
+RUN apt-get upgrade -y
 RUN apt-get install -y \ 
     sudo  \
     git  \

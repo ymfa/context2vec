@@ -4,8 +4,8 @@
 # sudo apt-get update
 # sudo apt-get upgrade
 # sudo apt-get install git
-# git config --global user.email "hey_flora@126.com"
-# git config --global user.name "qianchu"
+git config --global user.email "hey_flora@126.com"
+git config --global user.name "qianchu"
 
 # set up bash shell
 # pack python project
