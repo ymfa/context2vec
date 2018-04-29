@@ -12,7 +12,9 @@ if __name__ == '__main__':
         sys.exit(1)
 
     csv_filename = sys.argv[1]
-    out_filename = csv_filename.rsplit('.', 1)[0]+'-'+sys.argv[3]
+    model_f=sys.argv[3].split('/')[-1]
+    out_filename = csv_filename.rsplit('.', 1)[0]+'-'+model_f
+    print out_filename
     mr = ModelReader(sys.argv[3])
 
 
