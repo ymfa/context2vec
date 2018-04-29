@@ -12,7 +12,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     csv_filename = sys.argv[1]
-    out_filename = csv_filename.rsplit('.', 1)[0]
+    out_filename = csv_filename.rsplit('.', 1)[0]+'-'+sys.argv[3]
     mr = ModelReader(sys.argv[3])
 
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
             try:
                 trad_embed = mr.w[mr.word2index2[trad.encode('utf-8')]]
             except:
-                print u"Traditional character %s does not have an embedding." % trad
+                print "Traditional character {0} does not have an embedding." .format( trad.encode('utf-8'))
                 continue
             simp2trad_new[k].append((trad, trad_embed))
     simp2trad = simp2trad_new
