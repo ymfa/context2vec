@@ -174,9 +174,9 @@ for epoch in range(args.epoch):
         S.save_npz(args.modelfile+'.{0}'.format(epoch), model)
 
     with open(args.modelfile + '.params.{0}'.format(epoch), 'w') as f:
-        f.write('model_file\t' + args.modelfile[args.modelfile.rfind('/')+1:]+'\n')
-        f.write('words_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.targets\n')
-        f.write('vocab_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.source\n')
+        f.write('model_file\t' + args.modelfile[args.modelfile.rfind('/')+1:]+'.{0}\n'.format(epoch))
+        f.write('words_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.targets.{0}\n'.format(epoch))
+        f.write('vocab_file\t' + args.wordsfile[args.wordsfile.rfind('/')+1:]+'.source.{0}\n'.format(epoch))
         f.write('unit\t' + str(args.unit)+'\n') 
         if args.deep:
             f.write('deep\tyes\n')
