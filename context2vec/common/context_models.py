@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import math
 from itertools import izip
 
