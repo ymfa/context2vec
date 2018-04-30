@@ -12,9 +12,9 @@ class ModelReader(object):
     '''
     Reads a pre-trained model using a config file
     '''
-
-    def __init__(self, config_file):
-        self.gpu = -1 # todo support gpu
+    def __init__(self, config_file, gpu=-1):
+        self.gpu = gpu
+   
         print 'Reading config file: ' + config_file
         params = self.read_config_file(config_file)
         print 'Config: ', params
@@ -153,9 +153,3 @@ class ModelReader(object):
                     count = int(tokens[1].strip())
                     counts[word] = count
         return counts
-
-    
-
-
-
-        
