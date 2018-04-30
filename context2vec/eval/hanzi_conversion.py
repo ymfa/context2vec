@@ -8,12 +8,16 @@ from context2vec.common.model_reader import ModelReader
 if __name__ == '__main__':
 
     if len(sys.argv) < 4:
-        sys.stderr.write("Usage: %s <csv-filename> <conversion-table> <model-params-filename>\n" % sys.argv[0])
+        sys.stderr.write("Usage: %s <csv-filename> <conversion-table> <model-params-filename> [gpu]\n" % sys.argv[0])
         sys.exit(1)
 
     csv_filename = sys.argv[1]
     out_filename = csv_filename.rsplit('.', 1)[0]
-    mr = ModelReader(sys.argv[3])
+    try:
+        gpu = int(sys.argv[4])
+    except:
+        gpu = -1
+    mr = ModelReader(sys.argv[3], gpu)
 
 
     # read conversion table
