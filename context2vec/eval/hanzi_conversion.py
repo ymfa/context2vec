@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import numpy as np
 import pandas as pd
@@ -5,7 +7,28 @@ from codecs import open
 from collections import Counter, defaultdict
 from context2vec.common.model_reader import ModelReader
 import cupy as cp
+import re
 
+def sent_seg(sent):
+    sent_list=re.findall(ur'[^！。？!?\n]*(?:[！。？!?\n])*', sent)
+    return sent_list
+
+def extract_sent(input_sent,position):
+    sent_lst=sent_seg(input_sent)
+    
+    start_i=0
+    end_i=0
+    for sent in sent_lst:
+        end_i+=len(sent)
+        if position >=start_i and position < end_i:
+            if len(sent)<=1:
+                return input_sent,position
+            else:
+                position=position-start_i
+                return sent,position
+        else:
+            start_i+=len(sent)
+            
 if __name__ == '__main__':
 
     if len(sys.argv) < 4:
@@ -59,6 +82,7 @@ if __name__ == '__main__':
 
     # run conversion test
     def predict(simp_sentence, pos):
+        simp_sentence,pos=extract_sent(simp_sentence,pos)
         tokens = [t.encode('utf-8') for t in simp_sentence]
         tokens = [t if t in mr.word2index1 else '<UNK>' for t in tokens]
         context_embed = cp.array(mr.model.context2vec(tokens, pos))
@@ -70,7 +94,7 @@ if __name__ == '__main__':
             
             if float(score) > bestScore:
                 bestTrad, bestScore = trad, score
-                
+
         return bestTrad
 
     csv = pd.read_csv(csv_filename, encoding='utf-8')
