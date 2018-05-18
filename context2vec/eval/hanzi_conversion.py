@@ -4,6 +4,7 @@ import pandas as pd
 from codecs import open
 from collections import Counter, defaultdict
 from context2vec.common.model_reader import ModelReader
+import cupy as cp
 
 if __name__ == '__main__':
 
@@ -60,14 +61,16 @@ if __name__ == '__main__':
     def predict(simp_sentence, pos):
         tokens = [t.encode('utf-8') for t in simp_sentence]
         tokens = [t if t in mr.word2index1 else '<UNK>' for t in tokens]
-        context_embed = mr.model.context2vec(tokens, pos)
-        context_embed = context_embed / np.sqrt((context_embed * context_embed).sum())
+        context_embed = cp.array(mr.model.context2vec(tokens, pos))
+        context_embed = context_embed / cp.sqrt((context_embed * context_embed).sum())
         simp = simp_sentence[pos]
         bestTrad, bestScore = None, None
         for trad, trad_embed in simp2trad[simp]:
-            score = np.dot(context_embed, trad_embed)  # both already normalized
-            if score > bestScore:
+            score = cp.dot(context_embed, cp.array(trad_embed))  # both already normalized
+            
+            if float(score) > bestScore:
                 bestTrad, bestScore = trad, score
+                
         return bestTrad
 
     csv = pd.read_csv(csv_filename, encoding='utf-8')
