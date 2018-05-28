@@ -7,6 +7,8 @@ from codecs import open
 from collections import Counter, defaultdict
 from context2vec.common.model_reader import ModelReader
 import cupy as cp
+from chainer import cuda
+
 import re
 
 def sent_seg(sent):
@@ -39,10 +41,18 @@ if __name__ == '__main__':
     model_f=sys.argv[3].split('/')[-1]
     out_filename = csv_filename.rsplit('.', 1)[0]+'-'+model_f
     print out_filename
+    
+    
+
+
     try:
         gpu = int(sys.argv[4])
     except:
         gpu = -1
+    if gpu >= 0:
+        cuda.check_cuda_available()
+        cuda.get_device(gpu).use()
+        xp = cp if gpu >= 0 else np
     mr = ModelReader(sys.argv[3],gpu)
 
 
@@ -85,12 +95,12 @@ if __name__ == '__main__':
         simp_sentence,pos=extract_sent(simp_sentence,pos)
         tokens = [t.encode('utf-8') for t in simp_sentence]
         tokens = [t if t in mr.word2index1 else '<UNK>' for t in tokens]
-        context_embed = cp.array(mr.model.context2vec(tokens, pos))
-        context_embed = context_embed / cp.sqrt((context_embed * context_embed).sum())
+        context_embed = xp.array(mr.model.context2vec(tokens, pos))
+        context_embed = context_embed / xp.sqrt((context_embed * context_embed).sum())
         simp = simp_sentence[pos]
         bestTrad, bestScore = None, None
         for trad, trad_embed in simp2trad[simp]:
-            score = cp.dot(context_embed, cp.array(trad_embed))  # both already normalized
+            score = xp.dot(context_embed, xp.array(trad_embed))  # both already normalized
             
             if float(score) > bestScore:
                 bestTrad, bestScore = trad, score
