@@ -11,6 +11,7 @@ git config --global user.name "qianchu"
 # pack python project
 cd /home/simp2trad/context2vec
 sudo python setup.py install
+sudo pip install jieba
 
 # run jupyter
 cd /home/
