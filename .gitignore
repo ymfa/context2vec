@@ -7,6 +7,6 @@
 model_out/*
 *.log
 *_errors.csv
-
+*_report.csv
 
 
