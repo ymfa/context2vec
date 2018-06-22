@@ -6,3 +6,7 @@
 /.idea/
 model_out/*
 *.log
+*_errors.csv
+
+
+
