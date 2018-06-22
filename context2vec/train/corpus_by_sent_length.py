@@ -20,6 +20,8 @@ def get_file(sub_files, corpus_dir, num_filename):
 
 def sent_seg_small(sent):
     sent_list=re.findall(ur'[^、，,；;！。？!?\n]+(?:[、,;，；！。？!?\n])*', sent)
+    if len(sent_list)>1:
+        sent_list.append(sent)
     return sent_list
 
 def sent_permutate(sent):
@@ -79,9 +81,10 @@ if __name__ == '__main__':
        
            
         line=line.replace('<unk>','<UNK>')
-        sent_list=sent_seg_small(line.decode('utf-8'))
+        #sent_list=sent_seg_small(line.decode('utf-8'))
+        sent_list=[line.decode('utf-8')]
         for sents in sent_list:
-            sents=sents.strip()
+            #sents=[sents.strip()]
             sents=sent_permutate(sents)
             for sent in sents:
                 sent=sent.strip().encode('utf-8')
