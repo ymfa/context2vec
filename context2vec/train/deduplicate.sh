@@ -30,6 +30,9 @@ do
 
 done
 
+rm $dir_en/sent.*
+rm $dir_de/sent.*
+
 echo create stats
 python deduplicate.py $dir $seg_flag
 rm -rf ${en_de_dir}
