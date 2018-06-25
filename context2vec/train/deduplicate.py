@@ -92,7 +92,7 @@ if __name__ == '__main__':
                         f_en.write(en_line+'\n'.encode('utf-8'))
                         f_de.write(de_line +'\n'.encode('utf-8'))
 
-                        sent_counts[fname] += 1
+                        sent_counts[num_filename] += 1
                         for word in en_ws:
                             word_en_counts[word] += 1
                         for word in de_ws:
