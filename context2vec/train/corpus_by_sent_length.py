@@ -84,8 +84,8 @@ if __name__ == '__main__':
         #sent_list=sent_seg_small(line.decode('utf-8'))
         sent_list=[line.decode('utf-8')]
         for sents in sent_list:
-            #sents=[sents.strip()]
-            sents=sent_permutate(sents)
+            sents=[sents.strip()]
+            #sents=sent_permutate(sents)
             for sent in sents:
                 sent=sent.strip().encode('utf-8')
                 words = sent.split()
