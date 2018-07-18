@@ -9,8 +9,8 @@ import os
 from collections import Counter
 from context2vec.common.defs import SENT_COUNTS_FILENAME, WORD_COUNTS_FILENAME, TOTAL_COUNTS_FILENAME
 import re
+
 import random
-random.seed(1)
 
 def get_file(sub_files, corpus_dir, num_filename):
     if num_filename not in sub_files:
@@ -53,31 +53,49 @@ def sent_permutate(sent):
 if __name__ == '__main__':
     
     if len(sys.argv) < 2:
-        print "usage: %s <corpus-file> [max-sent-len]"  % (sys.argv[0])
+        print "usage: %s <corpus-file> [max-sent-len] [file total lines]"  % (sys.argv[0])
         sys.exit(1)
         
     corpus_file = open(sys.argv[1], 'r')
     if len(sys.argv) > 2:
         max_sent_len = int(sys.argv[2])
     else:
-        max_sent_len = 128    
+        max_sent_len = 128 
+        
     print 'Using maximum sentence length: ' + str(max_sent_len)
-    
+
+    if len(sys.argv) > 3:
+        
+        total_lines=int(sys.argv[3])
+        random.seed(1)
+        test_lines_i=random.sample(list(range(total_lines)),int(total_lines*0.2))
+        test_lines_i={i:1 for i in test_lines_i}
+    else:
+        test_lines_i={}
+        
+   
     corpus_dir = sys.argv[1]+'.DIR'
     os.makedirs(corpus_dir)
     sent_counts_file = open(corpus_dir+'/'+SENT_COUNTS_FILENAME, 'w')
     word_counts_file = open(corpus_dir+'/'+WORD_COUNTS_FILENAME, 'w')
     totals_file = open(corpus_dir+'/'+TOTAL_COUNTS_FILENAME, 'w')
+    test_file=open(corpus_dir+'/'+'test_sents', 'w')
     
     sub_files = {}
     sent_counts = Counter()
     word_counts = Counter()
-    
+    print ('start..')
     line_num=0
     for line in corpus_file:
-        line_num+=1
-        if line_num%10000==0 and line_num>=10000:
+        if line_num%100000==0 and line_num>=100000:
             print '.',
+        if line_num in test_lines_i:
+            test_file.write(line)
+            line_num+=1
+            continue
+        line_num+=1
+#         if line_num%10000==0 and line_num>=10000:
+#             print '.',
        
            
         line=line.replace('<unk>','<UNK>')
@@ -115,5 +133,6 @@ if __name__ == '__main__':
     sent_counts_file.close()
     word_counts_file.close()
     totals_file.close()
+    test_file.close()
     
     print 'Done'
