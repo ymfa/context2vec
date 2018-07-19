@@ -66,12 +66,14 @@ if __name__ == '__main__':
 
     if len(sys.argv) > 3:
         
-        total_lines=int(sys.argv[3])
+#         total_lines=int(sys.argv[3])
         random.seed(1)
-        test_lines_i=random.sample(list(range(total_lines)),int(total_lines*0.2))
-        test_lines_i={i:1 for i in test_lines_i}
+#         test_lines_i=random.sample(list(range(total_lines)),int(total_lines*0.2))
+#         test_lines_i={i:1 for i in test_lines_i}
+        test_split=float(sys.argv[3])
+    
     else:
-        test_lines_i={}
+        test_split=1.1
         
    
     corpus_dir = sys.argv[1]+'.DIR'
@@ -89,10 +91,7 @@ if __name__ == '__main__':
     for line in corpus_file:
         if line_num%100000==0 and line_num>=100000:
             print '.',
-        if line_num in test_lines_i:
-            test_file.write(line)
-            line_num+=1
-            continue
+        
         line_num+=1
 #         if line_num%10000==0 and line_num>=10000:
 #             print '.',
@@ -109,6 +108,13 @@ if __name__ == '__main__':
                 words = sent.split()
                 wordnum = len(words)
                 if wordnum > 1 and wordnum <= max_sent_len:
+                    random_i=random.uniform(0.0,1.0)
+                    if random_i<test_split:
+                        
+#                     if line_num in test_lines_i:
+                        test_file.write(line)
+                        line_num+=1
+                        continue
                     num_filename = 'sent.' + str(wordnum)
                     sub_file = get_file(sub_files, corpus_dir, num_filename)
                     #sent=sent.decode('utf8')
