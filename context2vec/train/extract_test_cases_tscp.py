@@ -49,7 +49,7 @@ def match_conversion(conversion,test_out_f,test_en_f,test_de_f):
                             line_nums+='-'+str(line_num)
                 #output matched results per sentence to csv         
                 if trad_ws!='':
-                    writer.writerow({fieldnames[0]:ws, fieldnames[1]:trad_ws,fieldnames[2]:char_is,fieldnames[3]:line,fieldnames[4]:trad_line, fieldnames[5]:line_nums })
+                    writer.writerow({fieldnames[0]:ws, fieldnames[1]:trad_ws,fieldnames[2]:char_is,fieldnames[3]:line.replace(" ",""),fieldnames[4]:trad_line.replace(" ", ""), fieldnames[5]:line_nums })
                 line_num+=1
 
 
