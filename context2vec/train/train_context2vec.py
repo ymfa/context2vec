@@ -5,10 +5,11 @@ Learns context2vec's parametric model
 import argparse
 import time
 import sys
+import codecs
 
 import numpy as np
 from chainer import cuda
-import chainer.links as L
+from context2vec.common.ns_link import NegativeSampling  # from chainer.links import ...
 import chainer.optimizers as O
 import chainer.serializers as S
 import chainer.computational_graph as C
@@ -51,6 +52,9 @@ def parse_arguments():
     parser.add_argument('--wordsfile', '-w',
                         default=None,
                         help='word embeddings output filename')
+    parser.add_argument('--convtable', '-cv',
+                        default=None,
+                        help='conversion table for creating distractors')
     parser.add_argument('--modelfile', '-m',
                         default=None,
                         help='model output filename')
@@ -112,8 +116,28 @@ print('n_vocab1: %d' % (len(reader.word2index1)-3)) # excluding the three specia
 print('n_vocab2: %d' % (len(reader.word2index2)-3)) # excluding the three special tokens
 print('corpus size: %d' % (reader.total_words))
 
+if args.convtable:
+    distractors = {}
+    with codecs.open(args.convtable, 'r', encoding='utf-8') as f:
+        for line in f:
+            _, trad_chars = line.strip().split('\t')
+            variant_mode = False
+            competitors = []
+            for char in trad_chars:
+                if char == '(': variant_mode = True
+                elif char == ')': variant_mode = False
+                elif not variant_mode:
+                    word_idx = reader.word2index2.get(char.encode('utf-8'))
+                    if word_idx is not None:
+                        competitors.append(word_idx)
+            if len(competitors) > 1:
+                for i, c in enumerate(competitors):
+                    distractors[c] = competitors[:i] + competitors[i+1:]
+else:
+    distractors = None
+
 cs2 = [reader.trimmed_word2count2[w] for w in range(len(reader.trimmed_word2count2))]
-loss_func2 = L.NegativeSampling(target_word_units, cs2, NEGATIVE_SAMPLING_NUM, args.ns_power)
+loss_func2 = NegativeSampling(target_word_units, cs2, NEGATIVE_SAMPLING_NUM, args.ns_power, distractors)
 
 if args.context == 'lstm':
     model = BiLstmContext(args.deep, args.gpu, reader.word2index1, reader.word2index2, context_word_units, lstm_hidden_units, target_word_units, None, loss_func2, True, args.dropout)
