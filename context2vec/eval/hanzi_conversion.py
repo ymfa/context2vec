@@ -102,6 +102,14 @@ def next_batch(sent_l2line_is,simp_lines,batchsize):
 # sent_ys = self._contexts_rep(sent_arr)
 
 
+def replace_unk(orig):
+    orig_out=[]
+    for line in orig:
+        line=line.replace('<UNK>','U')
+        orig_out.append(line)
+    return orig_out
+
+
 if __name__ == '__main__':
 
     if len(sys.argv) < 5:
@@ -175,6 +183,7 @@ if __name__ == '__main__':
         context_embed = context_embed / xp.sqrt((context_embed * context_embed).sum())
         simp = simp_sentence[pos]
         bestTrad, bestScore = None, None
+        
         for trad, trad_embed in simp2trad[simp]:
             score = xp.dot(context_embed, xp.array(trad_embed))  # both already normalized
             
@@ -189,11 +198,9 @@ if __name__ == '__main__':
                                        'res', 'orig', 'gold', 'orig_line_num'])
     
     #read in batches of sentences
+    csv['orig']=replace_unk(csv['orig']) #replace <UNK> with U
     batch_sent_generator=batch_data(csv['orig'],batchsize)
-#     print (batch_sent_generator)
     for sent_arr,line_inds in next_batch(batch_sent_generator,csv['orig'],batchsize):
-#         print (sent_arr)
-#         print (line_inds)
         mr.model.reset_state()
         contexts=mr.model._contexts_rep(sent_arr) #a batch of context representations
     
@@ -203,24 +210,29 @@ if __name__ == '__main__':
             pos_lst = str(csv['char_index'][line_i]).split('-')
             pos_lst=[p for p in pos_lst if p!='']
             gold_chars=list(csv['gold_char'][line_i])
-            orig_chars=list(csv['orig_char'][line_i])
             orig=csv['orig'][line_i]
             orig_line_nums=[i for i in str(csv['orig_line_num'][line_i]).split('-') if i !='-']
             
             for i,pos in enumerate(pos_lst):
-                if pos=='':
-                    continue
                 pos=int(pos)
+                if orig[pos] not in simp2trad:
+                    print ('warning! {0} not in simp2trad'.format(orig[pos].encode('utf-8')))
+                    continue
                 gold_char = normalize(gold_chars[i])
-#                 print (pos,line_current_i)
+                
                 pred_char_raw = predict(orig,pos,contexts,line_current_i)
+                
                 pred_char = normalize(pred_char_raw)
                 trad_count[gold_char] += 1
-                print "%s%s" % (gold_char.encode('utf-8'), pred_char.encode('utf-8')),
+                try:
+                    print "%s%s" % (gold_char.encode('utf-8'), pred_char.encode('utf-8')),
+                except AttributeError:
+                    print pos,gold_char.encode('utf-8'),pred_char_raw,pred_char,orig.encode('utf-8')
+                    sys.exit(1)
                 if gold_char != pred_char:
-                    orig_char = orig_chars[i]
+                    orig_char = orig[pos]
                     error_list.loc[len(error_list)] = [pred_char, orig_char, gold_char, pos,
-                                                       pred_char_raw, orig_chars[i], gold_chars[i], orig_line_nums[i]]
+                                                       pred_char_raw, orig, csv['gold'][line_i], orig_line_nums[i]]
                     trad_error_count[gold_char] += 1
     print
     error_list.to_csv(out_filename + '_c2v_errors.csv', index=False, encoding='utf-8')
