@@ -39,7 +39,9 @@ class NegativeSamplingFunction(function_node.FunctionNode):
         # fill in distractors
         if self.distractors is not None:
             for batch_i, v in enumerate(t):
-                neg_examples = self.distractors.get(v)
+#                 print (self.distractors)
+#                 print (type(self.distractors))
+                neg_examples = self.distractors.get(int(v))
                 if neg_examples:
                     for ex_i, u in enumerate(neg_examples):
                         if ex_i >= self.sample_size: break
