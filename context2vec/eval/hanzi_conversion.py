@@ -62,7 +62,7 @@ def batch_data(line_list,batchsize):
     return sent_l2line_is
 
 
-def read_batch(f1, simp_lines,batchsize, word2index1=None):        
+def read_batch(f1, simp_lines,batchsize, word2index1):        
     batch = []
     line_inds=[]
     while len(batch) < batchsize:
@@ -80,9 +80,7 @@ def read_batch(f1, simp_lines,batchsize, word2index1=None):
         for word in sent_words1:
 #             print (word)
             word= word.encode('utf-8')
-            if word2index1==None:
-                ind=0
-            elif word in word2index1 :
+            if word in word2index1 :
                 
                 ind = word2index1[word]
             else:
@@ -96,10 +94,10 @@ def read_batch(f1, simp_lines,batchsize, word2index1=None):
 def next_batch(sent_l2line_is,simp_lines,batchsize):
     
     for sent_l in sent_l2line_is.sent_ls:
-        if model_f.endswith('s2tw'):                          
-            sent_arr,line_inds=read_batch(sent_l2line_is[sent_l],simp_lines,batchsize,None)
-        else:
-            sent_arr,line_inds=read_batch(sent_l2line_is[sent_l],simp_lines,batchsize,mr.word2index1)
+#         if model_f.endswith('s2tw'):                          
+#             sent_arr,line_inds=read_batch(sent_l2line_is[sent_l],simp_lines,batchsize,None)
+#         else:
+        sent_arr,line_inds=read_batch(sent_l2line_is[sent_l],simp_lines,batchsize,mr.word2index1)
         if sent_arr==[]:
             continue
         else:
@@ -140,7 +138,7 @@ if __name__ == '__main__':
         cuda.get_device(gpu).use()
     xp = cp if gpu >= 0 else np
     if model_f.endswith('s2tw'):
-        opencc_out=open(sys.argv[3],mode='r', encoding='utf-8').readlines()
+        opencc_out=open(sys.argv[3],mode='r', encoding='utf-8')
     else:
         mr = ModelReader(sys.argv[3],gpu)
 
@@ -210,8 +208,14 @@ if __name__ == '__main__':
     
     #read in batches of sentences
     csv['orig']=replace_unk(csv['orig']) #replace <UNK> with U
-    batch_sent_generator=batch_data(csv['orig'],batchsize)
-    for sent_arr,line_inds in next_batch(batch_sent_generator,csv['orig'],batchsize):
+    if model_f.endswith('s2tw'):
+        print ('opencc')
+        batch=[([],range(len(csv['orig'])))]
+    else:
+        batch_sent_generator=batch_data(csv['orig'],batchsize)
+        batch=next_batch(batch_sent_generator,csv['orig'],batchsize)
+    
+    for sent_arr,line_inds in batch:
         if not model_f.endswith('s2tw'):
             mr.model.reset_state()
             contexts=mr.model._contexts_rep(sent_arr) #a batch of context representations
@@ -224,7 +228,9 @@ if __name__ == '__main__':
             gold_chars=list(csv['gold_char'][line_i])
             orig=csv['orig'][line_i]
             orig_line_nums=[i for i in str(csv['orig_line_num'][line_i]).split('-') if i !='-']
-            
+           
+            if model_f.endswith('s2tw'):
+                  opencc_line=opencc_out.readline() 
             for i,pos in enumerate(pos_lst):
                 pos=int(pos)
                 if orig[pos] not in simp2trad:
@@ -233,14 +239,15 @@ if __name__ == '__main__':
                 gold_char = normalize(gold_chars[i])
                 
                 if not model_f.endswith('s2tw'):
-                    pred_char_raw = predict(orig,pos,contexts,line_current_i)
+                    #£pred_char_raw = predict(orig,pos,contexts,line_current_i)
+                	pred_char_raw=gold_char
                 else:
-                    pred_char_raw=opencc_out[line_i][pos]
+                    pred_char_raw=opencc_line[pos]
                 
                 pred_char = normalize(pred_char_raw)
                 trad_count[gold_char] += 1
                 try:
-                    print "%s%s" % (gold_char.encode('utf-8'), pred_char.encode('utf-8')),
+                    print "%s%s%s" % (gold_char.encode('utf-8'), pred_char.encode('utf-8'),line_i),
                 except AttributeError:
                     print pos,gold_char.encode('utf-8'),pred_char_raw,pred_char,orig.encode('utf-8')
                     sys.exit(1)
