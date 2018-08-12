@@ -10,6 +10,7 @@ import cupy as cp
 from chainer import cuda
 import math
 
+
 import re
 
 def sent_seg(sent):
@@ -205,6 +206,8 @@ if __name__ == '__main__':
     trad_error_count, trad_count = Counter(), Counter()
     error_list = pd.DataFrame(columns=['char_res', 'orig_char', 'gold_char', 'char_index',
                                        'res', 'orig', 'gold', 'orig_line_num'])
+    error_list.to_csv(out_filename + '_c2v_errors.csv', index=False, encoding='utf-8')
+
     
     #read in batches of sentences
     csv['orig']=replace_unk(csv['orig']) #replace <UNK> with U
@@ -227,7 +230,8 @@ if __name__ == '__main__':
             pos_lst=[p for p in pos_lst if p!='']
             gold_chars=list(csv['gold_char'][line_i])
             orig=csv['orig'][line_i]
-            orig_line_nums=[i for i in str(csv['orig_line_num'][line_i]).split('-') if i !='-']
+            
+#             orig_line_nums=[i for i in str(csv['orig_line_num'][line_i]).split('-') if i !='']
            
             if model_f.endswith('s2tw'):
                   opencc_line=opencc_out.readline() 
@@ -239,8 +243,8 @@ if __name__ == '__main__':
                 gold_char = normalize(gold_chars[i])
                 
                 if not model_f.endswith('s2tw'):
-                    #£pred_char_raw = predict(orig,pos,contexts,line_current_i)
-                	pred_char_raw=gold_char
+                    pred_char_raw = predict(orig,pos,contexts,line_current_i)
+                	#pred_char_raw=gold_char
                 else:
                     pred_char_raw=opencc_line[pos]
                 
@@ -248,16 +252,19 @@ if __name__ == '__main__':
                 trad_count[gold_char] += 1
                 try:
                     print "%s%s%s" % (gold_char.encode('utf-8'), pred_char.encode('utf-8'),line_i),
+                    if line_current_i%100==0 and line_current_i>100:
+                        print ''
                 except AttributeError:
                     print pos,gold_char.encode('utf-8'),pred_char_raw,pred_char,orig.encode('utf-8')
                     sys.exit(1)
                 if gold_char != pred_char:
+                    #print ('diff')
                     orig_char = orig[pos]
-                    error_list.loc[len(error_list)] = [pred_char, orig_char, gold_char, pos,
-                                                       pred_char_raw, orig, csv['gold'][line_i], orig_line_nums[i]]
+                    error_list.loc[1] = [pred_char, orig_char, gold_char, pos,
+                                                       pred_char_raw, orig, csv['gold'][line_i], csv['orig_line_num'][line_i]]
+                    error_list.to_csv(out_filename + '_c2v_errors.csv', index=False, encoding='utf-8',mode='a', header=False)
                     trad_error_count[gold_char] += 1
     print
-    error_list.to_csv(out_filename + '_c2v_errors.csv', index=False, encoding='utf-8')
 
 
     # make report
